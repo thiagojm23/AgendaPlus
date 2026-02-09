@@ -55,6 +55,8 @@ cypress/screenshots/
 .env
 .env.local
 .env.*.local
+*FUNCTIONAL_INCLUDES_USAGE.md
+.github
 
 # Redis / Database files (caso use volumes locais)
 data/
