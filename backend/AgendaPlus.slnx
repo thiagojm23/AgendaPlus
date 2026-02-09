@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="AgendaPlus.Application/AgendaPlus.Application.csproj" Id="903b1735-d563-4f0d-8c24-526c95fe1903" />
+    <Project Path="AgendaPlus.Domain/AgendaPlus.Domain.csproj" Id="2f819831-bd24-4673-a4fa-efd81b480b66" />
+    <Project Path="AgendaPlus.Infrasctructure/AgendaPlus.Infrastructure.csproj" Id="84d821fe-bfaa-4549-8c80-6f69a47bea92" />
+    <Project Path="WebApi/AgendaPlus.WebApi.csproj" />
+  </Folder>
+</Solution>

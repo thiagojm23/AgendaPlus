@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>5dffbcf2-ebb6-4795-9a0a-d564cab9aaf8</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.4"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.12"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\AgendaPlus.Application\AgendaPlus.Application.csproj"/>
+        <ProjectReference Include="..\AgendaPlus.Infrasctructure\AgendaPlus.Infrastructure.csproj"/>
+    </ItemGroup>
+
+</Project>
