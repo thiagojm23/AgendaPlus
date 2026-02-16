@@ -1,7 +1,8 @@
 ﻿using AgendaPlus.Application.Commands;
-using AgendaPlus.Application.DTOs;
-using AgendaPlus.Application.Interfaces.Repositories;
+using AgendaPlus.Application.Common.Interfaces;
+using AgendaPlus.Application.DTOs.Responses;
 using AgendaPlus.Application.Interfaces.Services;
+using AgendaPlus.Application.QueryBuilders;
 using AgendaPlus.Domain.Common;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,8 @@ namespace AgendaPlus.Application.Handlers;
 public class RefreshTokenCommandHandler(
     IAuthService authService,
     ITokenService tokenService,
-    ITokenRepository tokenRepository,
+    AuthTokenQueryBuilder authTokenQueryBuilder,
+    IApplicationDbContext context,
     ILogger<RefreshTokenCommandHandler> logger)
     : IRequestHandler<RefreshTokenCommand, Result<AuthResponseDto>>
 {
@@ -27,7 +29,9 @@ public class RefreshTokenCommandHandler(
             return Result.Failure<AuthResponseDto>(validationResult.Error);
         }
 
-        var token = (await tokenRepository.GetByRefreshTokenAsync(request.RefreshToken, token => token.User))!;
+        var token = (await authTokenQueryBuilder
+            .WithUser()
+            .GetByRefreshTokenAsync(request.RefreshToken, cancellationToken))!;
 
         logger.LogInformation("Generating new tokens for user ID: {UserId}", token.User.Id);
 
@@ -36,7 +40,7 @@ public class RefreshTokenCommandHandler(
 
         token.UpdateRefreshToken(newRefreshToken);
 
-        await tokenRepository.UpdateAsync(token);
+        await context.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Refresh token successfully updated for user ID: {UserId}", token.User.Id);
 

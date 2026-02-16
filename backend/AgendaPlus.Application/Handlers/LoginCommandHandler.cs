@@ -1,7 +1,8 @@
 ﻿using AgendaPlus.Application.Commands;
-using AgendaPlus.Application.DTOs;
-using AgendaPlus.Application.Interfaces.Repositories;
+using AgendaPlus.Application.Common.Interfaces;
+using AgendaPlus.Application.DTOs.Responses;
 using AgendaPlus.Application.Interfaces.Services;
+using AgendaPlus.Application.QueryBuilders;
 using AgendaPlus.Domain.Common;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -10,13 +11,14 @@ namespace AgendaPlus.Application.Handlers;
 
 public class LoginCommandHandler(
     ITokenService tokenService,
-    IUserRepository userRepository,
+    UserQueryBuilder userQueryBuilder,
+    IApplicationDbContext context,
     ILogger<LoginCommandHandler> logger)
     : IRequestHandler<LoginCommand, Result<AuthResponseDto>>
 {
     public async Task<Result<AuthResponseDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = userRepository.GetByEmailAsync(request.Email).Result;
+        var user = await userQueryBuilder.GetByEmailAsync(request.Email, cancellationToken);
 
         if (user == null || BCrypt.Net.BCrypt.Verify(user.PasswordHash, request.Password))
         {
@@ -28,7 +30,7 @@ public class LoginCommandHandler(
         var refreshToken = await tokenService.GenerateRefreshTokenAsync(user);
 
         user.SetAuthToken(refreshToken);
-        await userRepository.UpdateAsync(user);
+        await context.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Successfully logged in: {Email}", request.Email);
 

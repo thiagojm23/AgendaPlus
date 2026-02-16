@@ -1,12 +1,15 @@
 ﻿using AgendaPlus.Application.Commands;
-using AgendaPlus.Application.DTOs;
+using AgendaPlus.Application.DTOs.Requests;
+using AgendaPlus.Application.DTOs.Responses;
 using AgendaPlus.Application.Interfaces.Services;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgendaPlus.WebApi.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("AgendaPlus/[controller]/[action]")]
 public class AuthenticationController(
     ICurrentUserService currentUser,
@@ -50,6 +53,7 @@ public class AuthenticationController(
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginRequestDto dto)
     {
         logger.LogInformation("Login action called for email: {Email}", dto.Email);
@@ -82,6 +86,7 @@ public class AuthenticationController(
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<ActionResult<bool>> ForgotPassword(ForgotPasswordRequestDto dto)
     {
         logger.LogInformation("Forgot password action called for email: {Email}", dto.Email);
@@ -90,5 +95,20 @@ public class AuthenticationController(
         var response = await mediator.Send(command);
 
         return Ok(response);
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    public async Task<ActionResult> ResetPassword(ResetPasswordRequestDto dto)
+    {
+        logger.LogInformation("Reset password action called");
+
+        var command = new ResetPasswordCommand(currentUser.UserId, dto.Token, dto.NewPassword, dto.ConfirmPassword);
+        var result = await mediator.Send(command);
+
+        if (result.IsFailure)
+            return BadRequest(result.Error);
+
+        return Ok(new { message = "Password successfully reset" });
     }
 }

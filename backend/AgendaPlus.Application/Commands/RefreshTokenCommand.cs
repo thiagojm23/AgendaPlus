@@ -1,4 +1,4 @@
-﻿using AgendaPlus.Application.DTOs;
+﻿using AgendaPlus.Application.DTOs.Responses;
 using AgendaPlus.Domain.Common;
 using MediatR;
 

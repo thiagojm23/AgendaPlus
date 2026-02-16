@@ -5,7 +5,7 @@ namespace AgendaPlus.Domain.Entities;
 
 public class AvailabilityPatterns : BaseEntityReferenceTenant
 {
-    private decimal _price_per_hour;
+    private decimal _pricePerHour;
     public Guid ResourceId { get; private set; }
     public required DaysOfWeekBitwise DayOfWeek { get; set; }
     public required TimeOnly StartTime { get; set; }
@@ -14,7 +14,7 @@ public class AvailabilityPatterns : BaseEntityReferenceTenant
 
     public decimal PricePerHour
     {
-        get => _price_per_hour;
-        set => _price_per_hour = Math.Round(value, 2);
+        get => _pricePerHour;
+        set => _pricePerHour = Math.Round(value, 2);
     }
 }

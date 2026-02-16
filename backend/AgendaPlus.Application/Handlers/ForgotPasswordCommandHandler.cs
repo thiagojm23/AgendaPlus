@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using AgendaPlus.Application.Commands;
-using AgendaPlus.Application.Interfaces.Repositories;
+using AgendaPlus.Application.Common.Interfaces;
+using AgendaPlus.Application.QueryBuilders;
 using AgendaPlus.Domain.Entities;
 using AgendaPlus.Domain.Enums;
 using MediatR;
@@ -11,26 +11,31 @@ using Microsoft.Extensions.Logging;
 namespace AgendaPlus.Application.Handlers;
 
 public class ForgotPasswordCommandHandler(
-    IUserRepository userRepository,
-    IOutboxMessageRepository outboxMessageRepository,
+    UserQueryBuilder userQueryBuilder,
+    IApplicationDbContext context,
     ILogger<ForgotPasswordCommandHandler> logger) : IRequestHandler<ForgotPasswordCommand, bool>
 {
     public async Task<bool> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
         logger.LogInformation("Processing forgot password request for email: {Email}", request.Email);
 
-        var user = await userRepository.GetByEmailAsync(request.Email);
+        var user = await userQueryBuilder.GetByEmailAsync(request.Email, cancellationToken);
         
         if (user == null)
         {
             logger.LogWarning("User not found for email: {Email}", request.Email);
-            // Retornar true mesmo quando usuário não existe (segurança - não revelar se email existe)
             return true;
         }
 
         var resetToken = GenerateResetToken();
         
-        logger.LogInformation("Generated reset token for user: {UserId}", user.Id);
+        if (user.Token == null)
+        {
+            user.SetAuthToken(string.Empty);
+        }
+        user.Token!.SetPasswordResetToken(resetToken);
+        
+        logger.LogInformation("Generated and saved reset token for user: {UserId}", user.Id);
 
         var messageContent = new
         {
@@ -47,7 +52,8 @@ public class ForgotPasswordCommandHandler(
             OccurredOn = DateTimeOffset.UtcNow
         };
 
-        await outboxMessageRepository.AddAsync(outboxMessage);
+        await context.OutboxMessages.AddAsync(outboxMessage, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
         
         logger.LogInformation("Outbox message created for forgot password email. User: {UserId}", user.Id);
 

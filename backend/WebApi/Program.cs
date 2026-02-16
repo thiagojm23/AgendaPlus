@@ -2,13 +2,14 @@ using System.Data;
 using System.Text;
 using AgendaPlus.Application;
 using AgendaPlus.Application.Common.Behaviors;
-using AgendaPlus.Application.Interfaces.Repositories;
+using AgendaPlus.Application.Common.Interfaces;
 using AgendaPlus.Application.Interfaces.Services;
+using AgendaPlus.Application.QueryBuilders;
 using AgendaPlus.Infrastructure;
-using AgendaPlus.Infrastructure.Repositories;
 using AgendaPlus.Infrastructure.Services;
 using AgendaPlus.Infrastructure.Settings;
 using AgendaPlus.WebApi.Consumers;
+using AgendaPlus.WebApi.Middlewares;
 using AgendaPlus.WebApi.Workers;
 using FluentValidation;
 using MassTransit;
@@ -26,10 +27,45 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Configurar Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "AgendaPlus API", Version = "v1" });
+    
+    // Configurar autenticação JWT no Swagger
+    c.AddSecurityDefinition("Bearer", new()
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    
+    c.AddSecurityRequirement(new()
+    {
+        {
+            new()
+            {
+                Reference = new()
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
         .UseSnakeCaseNamingConvention());
+
+// Registrar IApplicationDbContext
+builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
 // Registrar IDbConnection para Dapper
 builder.Services.AddScoped<IDbConnection>(_ => new NpgsqlConnection(connectionString));
@@ -44,10 +80,15 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-// Registrar Repositories
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-builder.Services.AddScoped<IOutboxMessageRepository, OutboxMessageRepository>();
+// Registrar Query Builders
+builder.Services.AddScoped<UserQueryBuilder>();
+builder.Services.AddScoped<AuthTokenQueryBuilder>();
+builder.Services.AddScoped<OutboxMessageQueryBuilder>();
+builder.Services.AddScoped<TenantQueryBuilder>();
+builder.Services.AddScoped<ResourceQueryBuilder>();
+builder.Services.AddScoped<BookingQueryBuilder>();
+builder.Services.AddScoped<AvailabilityPatternsQueryBuilder>();
+builder.Services.AddScoped<AvailabilityExceptionsQueryBuilder>();
 
 // Registrar Email Service
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -56,7 +97,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
 // Configurar MassTransit com RabbitMQ
-var rabbitMQSettings = builder.Configuration.GetSection("RabbitMQSettings").Get<RabbitMQSettings>();
+var rabbitMqSettings = builder.Configuration.GetSection("RabbitMQSettings").Get<RabbitMqSettings>();
 builder.Services.AddMassTransit(x =>
 {
     // Registrar consumers
@@ -64,14 +105,27 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(rabbitMQSettings!.HostName, (ushort)rabbitMQSettings.Port, "/", h =>
+        cfg.Host(rabbitMqSettings!.HostName, (ushort)rabbitMqSettings.Port, "/", h =>
         {
-            h.Username(rabbitMQSettings.Username);
-            h.Password(rabbitMQSettings.Password);
+            h.Username(rabbitMqSettings.Username);
+            h.Password(rabbitMqSettings.Password);
         });
 
         // Configurar endpoints dos consumers (MassTransit cria filas automaticamente)
-        cfg.ConfigureEndpoints(context);
+        // cfg.ConfigureEndpoints(context);
+
+        cfg.ReceiveEndpoint("forgot-password-email", e =>
+        {
+            /*
+            Remove a exchange intermediária
+            e.ConfigureConsumeTopology = false;
+
+            Faz bind direto da mensagem para a fila
+            e. Bind<ForgotPasswordEmailMessage>();
+            */
+
+            e.ConfigureConsumer<ForgotPasswordEmailConsumer>(context);
+        });
     });
 });
 
@@ -116,9 +170,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "AgendaPlus API v1");
+        c.RoutePrefix = "swagger";
+    });
+}
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -8,8 +8,8 @@ public class Booking : BaseEntityReferenceTenant
 {
     private decimal _totalPrice;
     public Guid ResourceId { get; private set; }
-    public required DateTimeOffset StartBookingDateTime { get; set; }
-    public required DateTimeOffset EndBookingDateTime { get; set; }
+    public required DateTime StartBookingDateTime { get; set; }
+    public required DateTime EndBookingDateTime { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
     public Resource? Resource { get; set; }
 

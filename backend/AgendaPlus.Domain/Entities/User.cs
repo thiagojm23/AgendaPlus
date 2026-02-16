@@ -26,4 +26,9 @@ public class User : BaseEntityReferenceTenant
         else
             Token.UpdateRefreshToken(refreshToken);
     }
+
+    public void UpdatePassword(string passwordHash)
+    {
+        PasswordHash = passwordHash;
+    }
 }

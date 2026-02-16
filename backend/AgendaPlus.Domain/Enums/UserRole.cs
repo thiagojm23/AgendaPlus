@@ -1,9 +1,8 @@
-﻿namespace AgendaPlus.Domain.Enums
+﻿namespace AgendaPlus.Domain.Enums;
+
+public enum UserRole
 {
-    public enum UserRole
-    {
-        Admin,
-        Employee,
-        customer
-    }
+    Admin,
+    Employee,
+    Customer
 }
