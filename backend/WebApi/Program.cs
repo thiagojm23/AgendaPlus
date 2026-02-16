@@ -21,6 +21,9 @@ using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configurar variáveis de ambiente sobrescrever appsettings
+builder.Configuration.AddEnvironmentVariables();
+
 // Add services to the container.
 
 builder.Services.AddControllers();
