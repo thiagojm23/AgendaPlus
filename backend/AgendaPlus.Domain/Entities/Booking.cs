@@ -7,11 +7,14 @@ namespace AgendaPlus.Domain.Entities;
 public class Booking : BaseEntityReferenceTenant
 {
     private decimal _totalPrice;
-    public Guid ResourceId { get; private set; }
+    public Guid ResourceId { get; set; } // Changed from private set to set
+    public Guid? UserId { get; set; } // Changed from private set to set (Null for guest bookings)
     public required DateTime StartBookingDateTime { get; set; }
     public required DateTime EndBookingDateTime { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
+    public required string ReservationCode { get; set; } // Unique code for lookup
     public Resource? Resource { get; set; }
+    public User? User { get; set; }
 
     [Column(TypeName = "jsonb")] public required CustomerData CustomerData { get; set; }
 
@@ -27,7 +30,7 @@ public class CustomerData
     public CustomerData(string name, string? email, string? phoneNumber)
     {
         if (string.IsNullOrEmpty(email) && string.IsNullOrEmpty(phoneNumber))
-            throw new ArgumentException("Pelo menos uma forma de contato deve ser fornecida (email ou telefone)");
+            throw new ArgumentException("At least one contact method must be provided (email or phone)");
 
         Name = name;
         Email = email;

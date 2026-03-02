@@ -5,9 +5,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgendaPlus.Application.QueryBuilders;
 
-public class AuthTokenQueryBuilder : BaseQueryBuilder<AuthToken>
+public class AuthTokenQueryBuilder(IApplicationDbContext context) : BaseQueryBuilder<AuthToken>(context)
 {
-    public AuthTokenQueryBuilder(IApplicationDbContext context) : base(context) { }
+    public AuthTokenQueryBuilder AsNoTracking()
+    {
+        Query = Query.AsNoTracking();
+        return this;
+    }
+
+    public AuthTokenQueryBuilder AsSplitQuery()
+    {
+        Query = Query.AsSplitQuery();
+        return this;
+    }
 
     public AuthTokenQueryBuilder WithUser()
     {

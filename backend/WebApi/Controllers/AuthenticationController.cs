@@ -23,6 +23,10 @@ public class AuthenticationController(
 
         var refreshToken = Request.Cookies["refreshToken"];
 
+        if (string.IsNullOrEmpty(refreshToken) &&
+            Request.Headers.TryGetValue("X-Refresh-Token", out var headerToken))
+            refreshToken = headerToken;
+
         if (string.IsNullOrEmpty(refreshToken)) return BadRequest("Refresh token is missing");
 
         var command = new RefreshTokenCommand(currentUser.UserId, refreshToken);

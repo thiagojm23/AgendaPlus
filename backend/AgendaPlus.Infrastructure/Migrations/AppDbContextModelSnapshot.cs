@@ -33,7 +33,7 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("expires_at");
 
                     b.Property<int>("LoginFailedAttempts")
@@ -47,16 +47,12 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .HasColumnName("password_reset_token");
 
                     b.Property<DateTime?>("PasswordResetTokenExpiresAt")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("password_reset_token_expires_at");
 
                     b.Property<string>("RefreshToken")
                         .HasColumnType("text")
                         .HasColumnName("refresh_token");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_id");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -64,9 +60,6 @@ namespace AgendaPlus.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_auth_tokens");
-
-                    b.HasIndex("TenantId")
-                        .HasDatabaseName("ix_auth_tokens_tenant_id");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -84,7 +77,7 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTime>("EndBlockTime")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("end_block_time");
 
                     b.Property<TimeOnly?>("OverrideEndTime")
@@ -108,7 +101,7 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .HasColumnName("resource_id");
 
                     b.Property<DateTime>("StartBlockTime")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("start_block_time");
 
                     b.Property<short>("Strategy")
@@ -189,19 +182,24 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTime>("EndBookingDateTime")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("end_booking_date_time");
+
+                    b.Property<string>("ReservationCode")
+                        .IsRequired()
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("reservation_code");
 
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uuid")
                         .HasColumnName("resource_id");
 
                     b.Property<DateTime>("StartBookingDateTime")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamp without time zone")
                         .HasColumnName("start_booking_date_time");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint")
                         .HasColumnName("status");
 
                     b.Property<Guid>("TenantId")
@@ -212,6 +210,10 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("total_price");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
                     b.Property<DateTimeOffset>("created_at")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamptz")
@@ -221,11 +223,18 @@ namespace AgendaPlus.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_bookings");
 
-                    b.HasIndex("ResourceId")
-                        .HasDatabaseName("ix_bookings_resource_id");
+                    b.HasIndex("ReservationCode")
+                        .IsUnique()
+                        .HasDatabaseName("idx_bookings_reservation_code");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("idx_bookings_tenant");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_bookings_user_id");
+
+                    b.HasIndex("ResourceId", "StartBookingDateTime", "EndBookingDateTime")
+                        .HasDatabaseName("idx_bookings_resource_datetime");
 
                     b.ToTable("bookings", null, t =>
                         {
@@ -452,21 +461,29 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<string>("BusinessName")
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("business_name");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<string>("Document")
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("document");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("varchar(100)")
                         .HasColumnName("email");
 
-                    b.Property<string>("FullName")
+                    b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("full_name");
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("first_name");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -479,11 +496,20 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("password_hash");
 
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("phone_number");
+
                     b.Property<short>("Role")
                         .HasColumnType("smallint")
                         .HasColumnName("role");
 
-                    b.Property<Guid>("TenantId")
+                    b.Property<string>("SecondName")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("second_name");
+
+                    b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
 
@@ -496,7 +522,8 @@ namespace AgendaPlus.Infrastructure.Migrations
 
                     b.HasIndex("TenantId", "Email")
                         .IsUnique()
-                        .HasDatabaseName("idx_users_tenant_email");
+                        .HasDatabaseName("idx_users_tenant_email")
+                        .HasFilter("tenant_id IS NOT NULL");
 
                     b.ToTable("users", null, t =>
                         {
@@ -535,13 +562,6 @@ namespace AgendaPlus.Infrastructure.Migrations
 
             modelBuilder.Entity("AgendaPlus.Domain.Entities.AuthToken", b =>
                 {
-                    b.HasOne("AgendaPlus.Domain.Entities.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_auth_tokens_tenants_tenant_id");
-
                     b.HasOne("AgendaPlus.Domain.Entities.User", "User")
                         .WithOne("Token")
                         .HasForeignKey("AgendaPlus.Domain.Entities.AuthToken", "UserId")
@@ -597,6 +617,12 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_bookings_tenants_tenant_id");
 
+                    b.HasOne("AgendaPlus.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_bookings_users_user_id");
+
                     b.OwnsOne("AgendaPlus.Domain.Entities.CustomerData", "CustomerData", b1 =>
                         {
                             b1.Property<Guid>("BookingId")
@@ -628,6 +654,8 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Resource");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("AgendaPlus.Domain.Entities.Resource", b =>
@@ -658,7 +686,6 @@ namespace AgendaPlus.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_users_tenants_tenant_id");
                 });
 

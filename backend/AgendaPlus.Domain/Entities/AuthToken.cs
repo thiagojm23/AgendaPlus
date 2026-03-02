@@ -3,7 +3,7 @@ using AgendaPlus.Domain.Entities.Bases;
 
 namespace AgendaPlus.Domain.Entities;
 
-public class AuthToken : BaseEntityReferenceTenant
+public class AuthToken : BaseEntity
 {
     private AuthToken()
     {

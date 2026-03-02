@@ -11,7 +11,7 @@ public class Tenant : BaseEntity
 
     public required string TimeZone { get; set; }
     public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
     public required TenantAdress Adress { get; set; }
     public ICollection<UserTenant> UserTenants { get; set; } = [];
 }

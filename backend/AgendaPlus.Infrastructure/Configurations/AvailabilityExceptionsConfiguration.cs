@@ -1,12 +1,10 @@
-﻿using AgendaPlus.Application.Interfaces.Services;
 using AgendaPlus.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AgendaPlus.Infrastructure.Configurations;
 
-public class AvailabilityExceptionsConfiguration(ICurrentUserService currentUserService)
-    : BaseConfiguration<AvailabilityExceptions>(currentUserService)
+public class AvailabilityExceptionsConfiguration : BaseConfiguration<AvailabilityExceptions>
 {
     public override void Configure(EntityTypeBuilder<AvailabilityExceptions> builder)
     {

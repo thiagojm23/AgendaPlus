@@ -5,7 +5,10 @@ using AgendaPlus.Domain.Common;
 
 namespace AgendaPlus.Infrastructure.Services;
 
-public class AuthService(AuthTokenQueryBuilder authTokenQueryBuilder, IApplicationDbContext context, ITokenService tokenService) : IAuthService
+public class AuthService(
+    AuthTokenQueryBuilder authTokenQueryBuilder,
+    IApplicationDbContext context,
+    ITokenService tokenService) : IAuthService
 {
     public async Task<Result> ValidateRefreshTokenAsync(string refreshToken)
     {
@@ -25,10 +28,7 @@ public class AuthService(AuthTokenQueryBuilder authTokenQueryBuilder, IApplicati
         {
             token.UpdateRefreshToken(null);
             var secondToken = await authTokenQueryBuilder.GetByUserIdAsync(token.UserId);
-            if (secondToken is not null)
-            {
-                secondToken.UpdateRefreshToken(null);
-            }
+            if (secondToken is not null) secondToken.UpdateRefreshToken(null);
 
             await context.SaveChangesAsync();
             return Result.Failure("Token does not belong to this user.");

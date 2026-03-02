@@ -1,5 +1,3 @@
-using AgendaPlus.Domain.Enums;
-
 namespace AgendaPlus.Application.Filters;
 
 public class AuthTokenFilter

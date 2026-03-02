@@ -2,17 +2,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace AgendaPlus.Infrastructure.Configurations
-{
-    public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
-    {
-        public void Configure(EntityTypeBuilder<OutboxMessage> builder)
-        {
-            builder.ToTable("outbox_messages");
+namespace AgendaPlus.Infrastructure.Configurations;
 
-            //Columns
-            builder.Property(x => x.Content).HasColumnType("jsonb");
-            builder.Property(x => x.OccurredOn).HasDefaultValueSql("CURRENT_TIMESTAMP");
-        }
+public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
+{
+    public void Configure(EntityTypeBuilder<OutboxMessage> builder)
+    {
+        builder.ToTable("outbox_messages");
+
+        //Columns
+        builder.Property(x => x.Content).HasColumnType("jsonb");
+        builder.Property(x => x.OccurredOn).HasDefaultValueSql("CURRENT_TIMESTAMP");
     }
 }

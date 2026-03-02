@@ -1,12 +1,10 @@
-﻿using AgendaPlus.Application.Interfaces.Services;
 using AgendaPlus.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AgendaPlus.Infrastructure.Configurations;
 
-public class AvailabilityPatternsConfiguration(ICurrentUserService currentUserService)
-    : BaseConfiguration<AvailabilityPatterns>(currentUserService)
+public class AvailabilityPatternsConfiguration : BaseConfiguration<AvailabilityPatterns>
 {
     public override void Configure(EntityTypeBuilder<AvailabilityPatterns> builder)
     {

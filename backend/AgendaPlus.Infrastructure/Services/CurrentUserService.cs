@@ -44,6 +44,12 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor, IDbCon
             if (_cachedTenantsId != null)
                 return _cachedTenantsId;
 
+            if (!IsAuthenticated)
+            {
+                _cachedTenantsId = Enumerable.Empty<Guid>();
+                return _cachedTenantsId;
+            }
+
             const string query = "SELECT tenant_id FROM user_tenants WHERE user_id = @UserId";
             _cachedTenantsId = dbConnection.Query<Guid>(query, new { UserId });
 

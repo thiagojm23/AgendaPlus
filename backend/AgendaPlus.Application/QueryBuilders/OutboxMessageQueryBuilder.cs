@@ -6,9 +6,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgendaPlus.Application.QueryBuilders;
 
-public class OutboxMessageQueryBuilder : BaseQueryBuilder<OutboxMessage>
+public class OutboxMessageQueryBuilder(IApplicationDbContext context) : BaseQueryBuilder<OutboxMessage>(context)
 {
-    public OutboxMessageQueryBuilder(IApplicationDbContext context) : base(context) { }
+    public OutboxMessageQueryBuilder AsNoTracking()
+    {
+        Query = Query.AsNoTracking();
+        return this;
+    }
+
+    public OutboxMessageQueryBuilder AsSplitQuery()
+    {
+        Query = Query.AsSplitQuery();
+        return this;
+    }
 
     public OutboxMessageQueryBuilder ApplyFilter(OutboxMessageFilter? filter)
     {

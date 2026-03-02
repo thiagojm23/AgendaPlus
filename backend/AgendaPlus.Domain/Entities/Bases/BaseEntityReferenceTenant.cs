@@ -1,7 +1,6 @@
-﻿namespace AgendaPlus.Domain.Entities.Bases
+﻿namespace AgendaPlus.Domain.Entities.Bases;
+
+public abstract class BaseEntityReferenceTenant : BaseEntity
 {
-    public abstract class BaseEntityReferenceTenant : BaseEntity
-    {
-        public Guid TenantId { get; set; }
-    }
+    public Guid TenantId { get; set; }
 }

@@ -5,26 +5,14 @@ namespace AgendaPlus.Application.QueryBuilders;
 
 public abstract class BaseQueryBuilder<TEntity> where TEntity : class
 {
-    protected IQueryable<TEntity> Query;
     protected readonly IApplicationDbContext Context;
+    public IQueryable<TEntity> Query { get; protected set; }
 
     protected BaseQueryBuilder(IApplicationDbContext context)
     {
         Context = context;
         var dbContext = context as DbContext;
         Query = dbContext!.Set<TEntity>();
-    }
-
-    public BaseQueryBuilder<TEntity> AsNoTracking()
-    {
-        Query = Query.AsNoTracking();
-        return this;
-    }
-
-    public BaseQueryBuilder<TEntity> AsSplitQuery()
-    {
-        Query = Query.AsSplitQuery();
-        return this;
     }
 
     public async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
@@ -36,12 +24,12 @@ public abstract class BaseQueryBuilder<TEntity> where TEntity : class
     {
         return await Query.ToListAsync(ct);
     }
-    
+
     public async Task<TEntity?> FirstOrDefaultAsync(CancellationToken ct = default)
     {
         return await Query.FirstOrDefaultAsync(ct);
     }
-    
+
     public async Task<int> CountAsync(CancellationToken ct = default)
     {
         return await Query.CountAsync(ct);

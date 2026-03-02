@@ -1,10 +1,9 @@
-﻿namespace AgendaPlus.Domain.Enums
+﻿namespace AgendaPlus.Domain.Enums;
+
+public enum StrategyAvailabilityException
 {
-    public enum StrategyAvailabilityException
-    {
-        Block,
-        OverrideTime,
-        OverridePrice,
-        OverrideAll
-    }
+    Block,
+    OverrideTime,
+    OverridePrice,
+    OverrideAll
 }

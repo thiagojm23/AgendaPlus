@@ -5,9 +5,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgendaPlus.Application.QueryBuilders;
 
-public class TenantQueryBuilder : BaseQueryBuilder<Tenant>
+public class TenantQueryBuilder(IApplicationDbContext context) : BaseQueryBuilder<Tenant>(context)
 {
-    public TenantQueryBuilder(IApplicationDbContext context) : base(context) { }
+    public TenantQueryBuilder AsNoTracking()
+    {
+        Query = Query.AsNoTracking();
+        return this;
+    }
+
+    public TenantQueryBuilder AsSplitQuery()
+    {
+        Query = Query.AsSplitQuery();
+        return this;
+    }
 
     public TenantQueryBuilder WithAdress()
     {
@@ -24,7 +34,7 @@ public class TenantQueryBuilder : BaseQueryBuilder<Tenant>
     public TenantQueryBuilder WithUserTenantsAndUsers()
     {
         Query = Query.Include(t => t.UserTenants)
-                     .ThenInclude(ut => ut.User);
+            .ThenInclude(ut => ut.User);
         return this;
     }
 

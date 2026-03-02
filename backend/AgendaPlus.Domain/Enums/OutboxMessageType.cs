@@ -1,9 +1,8 @@
-﻿namespace AgendaPlus.Domain.Enums
+﻿namespace AgendaPlus.Domain.Enums;
+
+public enum OutboxMessageType
 {
-    public enum OutboxMessageType
-    {
-        BookingCreated = 1,
-        BookingCanceled,
-        ForgotPasswordEmail
-    }
+    BookingCreated = 1,
+    BookingCanceled,
+    ForgotPasswordEmail
 }

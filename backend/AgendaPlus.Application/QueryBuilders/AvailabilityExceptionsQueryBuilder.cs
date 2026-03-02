@@ -5,9 +5,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgendaPlus.Application.QueryBuilders;
 
-public class AvailabilityExceptionsQueryBuilder : BaseQueryBuilder<AvailabilityExceptions>
+public class AvailabilityExceptionsQueryBuilder(IApplicationDbContext context)
+    : BaseQueryBuilder<AvailabilityExceptions>(context)
 {
-    public AvailabilityExceptionsQueryBuilder(IApplicationDbContext context) : base(context) { }
+    public AvailabilityExceptionsQueryBuilder AsNoTracking()
+    {
+        Query = Query.AsNoTracking();
+        return this;
+    }
+
+    public AvailabilityExceptionsQueryBuilder AsSplitQuery()
+    {
+        Query = Query.AsSplitQuery();
+        return this;
+    }
 
     public AvailabilityExceptionsQueryBuilder ApplyFilter(AvailabilityExceptionsFilter? filter)
     {

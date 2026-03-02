@@ -18,9 +18,9 @@ public class LoginCommandHandler(
 {
     public async Task<Result<AuthResponseDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await userQueryBuilder.GetByEmailAsync(request.Email, cancellationToken);
+        var user = await userQueryBuilder.WithToken().GetByEmailAsync(request.Email, cancellationToken);
 
-        if (user == null || BCrypt.Net.BCrypt.Verify(user.PasswordHash, request.Password))
+        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             logger.LogInformation("Failed to validate credentials for email: {Email}", request.Email);
             return Result.Failure<AuthResponseDto>("Invalid credentials", new UnauthorizedAccessException());

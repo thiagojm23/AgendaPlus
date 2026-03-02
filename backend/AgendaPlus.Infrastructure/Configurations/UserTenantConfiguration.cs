@@ -1,11 +1,10 @@
-﻿using AgendaPlus.Application.Interfaces.Services;
 using AgendaPlus.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AgendaPlus.Infrastructure.Configurations;
 
-public class UserTenantConfiguration(ICurrentUserService currentUserService) : IEntityTypeConfiguration<UserTenant>
+public class UserTenantConfiguration : IEntityTypeConfiguration<UserTenant>
 {
     public void Configure(EntityTypeBuilder<UserTenant> builder)
     {
@@ -26,8 +25,7 @@ public class UserTenantConfiguration(ICurrentUserService currentUserService) : I
             .HasForeignKey(ut => ut.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        //Query Filter
-        builder.HasQueryFilter(x => currentUserService.TenantsId.Contains(x.TenantId));
+        //Query Filter moved to AppDbContext.OnModelCreating
 
         //Indexes
         builder.HasIndex(ut => ut.TenantId);

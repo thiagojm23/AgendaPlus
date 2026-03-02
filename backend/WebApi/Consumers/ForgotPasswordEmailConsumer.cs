@@ -17,7 +17,7 @@ public class ForgotPasswordEmailConsumer(
         try
         {
             await emailService.SendForgotPasswordEmailAsync(message.Email, message.UserName, message.ResetToken);
-            
+
             logger.LogInformation("Forgot password email sent successfully to: {Email}", message.Email);
         }
         catch (Exception ex)

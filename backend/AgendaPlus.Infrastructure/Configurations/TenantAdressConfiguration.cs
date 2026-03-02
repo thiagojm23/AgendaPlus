@@ -1,12 +1,11 @@
-﻿using AgendaPlus.Application.Interfaces.Services;
+using AgendaPlus.Application.Interfaces.Services;
 using AgendaPlus.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AgendaPlus.Infrastructure.Configurations;
 
-public class TenantAdressConfiguration(ICurrentUserService currentUserService)
-    : IEntityTypeConfiguration<TenantAdress>
+public class TenantAdressConfiguration : IEntityTypeConfiguration<TenantAdress>
 {
     public void Configure(EntityTypeBuilder<TenantAdress> builder)
     {
@@ -15,7 +14,7 @@ public class TenantAdressConfiguration(ICurrentUserService currentUserService)
         // Base configuration (copied from BaseConfiguration but without the Many-to-One relationship)
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
-        builder.HasQueryFilter(x => currentUserService.TenantsId.Contains(x.TenantId));
+        // Query Filter moved to AppDbContext.OnModelCreating
 
         //Columns
         builder.Property(e => e.Cep).HasColumnType("varchar(15)").IsRequired();

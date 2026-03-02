@@ -1,12 +1,10 @@
-﻿using AgendaPlus.Application.Interfaces.Services;
 using AgendaPlus.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AgendaPlus.Infrastructure.Configurations;
 
-public class ResouceConfiguration(ICurrentUserService currentUserService)
-    : BaseConfiguration<Resource>(currentUserService)
+public class ResouceConfiguration : BaseConfiguration<Resource>
 {
     public override void Configure(EntityTypeBuilder<Resource> builder)
     {

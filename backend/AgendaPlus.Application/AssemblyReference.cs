@@ -1,6 +1,5 @@
-﻿namespace AgendaPlus.Application
+﻿namespace AgendaPlus.Application;
+
+public static class AssemblyReference
 {
-    public static class AssemblyReference
-    {
-    }
 }

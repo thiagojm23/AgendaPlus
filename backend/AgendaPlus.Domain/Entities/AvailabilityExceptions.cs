@@ -6,6 +6,16 @@ namespace AgendaPlus.Domain.Entities;
 public class AvailabilityExceptions : BaseEntityReferenceTenant
 {
     private decimal? _price;
+
+    private AvailabilityExceptions()
+    {
+    }
+
+    public AvailabilityExceptions(Guid resourceId)
+    {
+        ResourceId = resourceId;
+    }
+
     public Guid ResourceId { get; private set; }
     public string? Reason { get; set; }
     public StrategyAvailabilityException Strategy { get; set; }

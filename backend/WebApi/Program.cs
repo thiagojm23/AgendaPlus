@@ -8,52 +8,57 @@ using AgendaPlus.Application.QueryBuilders;
 using AgendaPlus.Infrastructure;
 using AgendaPlus.Infrastructure.Services;
 using AgendaPlus.Infrastructure.Settings;
-using AgendaPlus.WebApi.Consumers;
 using AgendaPlus.WebApi.Middlewares;
-using AgendaPlus.WebApi.Workers;
 using FluentValidation;
-using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Npgsql;
+
+// Enable Npgsql legacy timestamp behavior to allow DateTime.UtcNow in timestamp without time zone columns
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar variáveis de ambiente sobrescrever appsettings
+// Configure environment variables to override appsettings
 builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Configurar Swagger
+// Configure Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "AgendaPlus API", Version = "v1" });
-    
-    // Configurar autenticação JWT no Swagger
-    c.AddSecurityDefinition("Bearer", new()
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "AgendaPlus API", Version = "v1" });
+
+    // Configure JWT authentication in Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-    
-    c.AddSecurityRequirement(new()
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new()
+            new OpenApiSecurityScheme
             {
-                Reference = new()
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             },
@@ -63,27 +68,33 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Configure NpgsqlDataSource with dynamic JSON support (required for JSONB columns with complex types)
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+dataSourceBuilder.EnableDynamicJson();
+var dataSource = dataSourceBuilder.Build();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString)
+    options.UseNpgsql(dataSource)
         .UseSnakeCaseNamingConvention());
 
-// Registrar IApplicationDbContext
+// Register IApplicationDbContext
 builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
-// Registrar IDbConnection para Dapper
+// Register IDbConnection for Dapper
 builder.Services.AddScoped<IDbConnection>(_ => new NpgsqlConnection(connectionString));
 
-// Registrar IHttpContextAccessor
+// Register IHttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
-// Registrar ICurrentUserService
+// Register ICurrentUserService
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// Registrar serviços de autenticação e token
+// Register authentication and token services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-// Registrar Query Builders
+// Register Query Builders
 builder.Services.AddScoped<UserQueryBuilder>();
 builder.Services.AddScoped<AuthTokenQueryBuilder>();
 builder.Services.AddScoped<OutboxMessageQueryBuilder>();
@@ -93,18 +104,24 @@ builder.Services.AddScoped<BookingQueryBuilder>();
 builder.Services.AddScoped<AvailabilityPatternsQueryBuilder>();
 builder.Services.AddScoped<AvailabilityExceptionsQueryBuilder>();
 
-// Registrar Email Service
+// Register Email Service
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Configurar Settings
+// Register SMS Service
+builder.Services.AddScoped<ISmsService, SmsService>();
+
+// Configure Settings
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
-// Configurar MassTransit com RabbitMQ
+// Configure MassTransit with RabbitMQ
 var rabbitMqSettings = builder.Configuration.GetSection("RabbitMQSettings").Get<RabbitMqSettings>();
+
+/*
 builder.Services.AddMassTransit(x =>
 {
     // Registrar consumers
     x.AddConsumer<ForgotPasswordEmailConsumer>();
+    x.AddConsumer<BookingCreatedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -114,26 +131,19 @@ builder.Services.AddMassTransit(x =>
             h.Password(rabbitMqSettings.Password);
         });
 
-        // Configurar endpoints dos consumers (MassTransit cria filas automaticamente)
-        // cfg.ConfigureEndpoints(context);
+        // Configure retry policy
+        cfg.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
 
-        cfg.ReceiveEndpoint("forgot-password-email", e =>
-        {
-            /*
-            Remove a exchange intermediária
-            e.ConfigureConsumeTopology = false;
+        cfg.ReceiveEndpoint("forgot-password-email",
+            e => { e.ConfigureConsumer<ForgotPasswordEmailConsumer>(context); });
 
-            Faz bind direto da mensagem para a fila
-            e. Bind<ForgotPasswordEmailMessage>();
-            */
-
-            e.ConfigureConsumer<ForgotPasswordEmailConsumer>(context);
-        });
+        cfg.ReceiveEndpoint("booking-created", e => { e.ConfigureConsumer<BookingCreatedConsumer>(context); });
     });
 });
+*/
 
-// Registrar Background Worker apenas para processar Outbox
-builder.Services.AddHostedService<OutboxProcessorWorker>();
+// Register Background Worker for Outbox processing
+// builder.Services.AddHostedService<OutboxProcessorWorker>();
 
 builder.Services.AddValidatorsFromAssembly(typeof(AssemblyReference).Assembly);
 
@@ -164,7 +174,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     {
         OnMessageReceived = context =>
         {
-            context.Token = context.Request.Cookies["accessToken"];
+            // Read token from cookie; if not present, use the Authorization header (Bearer)
+            var cookieToken = context.Request.Cookies["accessToken"];
+            if (!string.IsNullOrEmpty(cookieToken))
+                context.Token = cookieToken;
             return Task.CompletedTask;
         }
     };

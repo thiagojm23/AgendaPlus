@@ -1,6 +1,5 @@
-﻿namespace AgendaPlus.Domain.Entities
+﻿namespace AgendaPlus.Domain.Entities;
+
+public class TenantSettings
 {
-    public class TenantSettings
-    {
-    }
 }

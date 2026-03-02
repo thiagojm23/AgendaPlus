@@ -19,8 +19,8 @@ public class ForgotPasswordCommandHandler(
     {
         logger.LogInformation("Processing forgot password request for email: {Email}", request.Email);
 
-        var user = await userQueryBuilder.GetByEmailAsync(request.Email, cancellationToken);
-        
+        var user = await userQueryBuilder.WithToken().GetByEmailAsync(request.Email, cancellationToken);
+
         if (user == null)
         {
             logger.LogWarning("User not found for email: {Email}", request.Email);
@@ -28,19 +28,16 @@ public class ForgotPasswordCommandHandler(
         }
 
         var resetToken = GenerateResetToken();
-        
-        if (user.Token == null)
-        {
-            user.SetAuthToken(string.Empty);
-        }
+
+        if (user.Token == null) user.SetAuthToken(string.Empty);
         user.Token!.SetPasswordResetToken(resetToken);
-        
+
         logger.LogInformation("Generated and saved reset token for user: {UserId}", user.Id);
 
         var messageContent = new
         {
-            Email = user.Email,
-            UserName = user.FullName,
+            user.Email,
+            UserName = $"{user.FirstName} {user.SecondName}",
             ResetToken = resetToken
         };
 
@@ -54,7 +51,7 @@ public class ForgotPasswordCommandHandler(
 
         await context.OutboxMessages.AddAsync(outboxMessage, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
-        
+
         logger.LogInformation("Outbox message created for forgot password email. User: {UserId}", user.Id);
 
         return true;
@@ -68,4 +65,3 @@ public class ForgotPasswordCommandHandler(
         return Convert.ToBase64String(randomBytes).Replace("+", "-").Replace("/", "_").TrimEnd('=');
     }
 }
-

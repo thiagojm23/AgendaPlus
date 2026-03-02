@@ -8,8 +8,8 @@ public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCo
     public ForgotPasswordCommandValidator()
     {
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("O email é obrigatório")
-            .EmailAddress().WithMessage("O email informado não é válido")
-            .MaximumLength(255).WithMessage("O email deve ter no máximo 255 caracteres");
+            .NotEmpty().WithMessage("Email is required")
+            .EmailAddress().WithMessage("Invalid email")
+            .MaximumLength(255).WithMessage("Email must be at most 255 characters");
     }
 }

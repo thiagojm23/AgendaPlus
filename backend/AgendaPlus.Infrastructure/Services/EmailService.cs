@@ -51,6 +51,49 @@ public class EmailService(
         }
     }
 
+    public async Task SendBookingConfirmationEmailAsync(
+        string toEmail,
+        string customerName,
+        string reservationCode,
+        DateTime startDateTime,
+        DateTime endDateTime,
+        decimal totalPrice,
+        string resourceName)
+    {
+        try
+        {
+            logger.LogInformation("Sending booking confirmation email to: {Email}", toEmail);
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_smtpSettings.FromName, _smtpSettings.FromEmail));
+            message.To.Add(new MailboxAddress(customerName, toEmail));
+
+            var parameters = GetBookingConfirmationEmailParameters(
+                customerName, reservationCode, startDateTime, endDateTime, totalPrice, resourceName);
+            message.Subject = parameters.Subject;
+
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = BuildEmailHtml(parameters)
+            };
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(_smtpSettings.Host, _smtpSettings.Port, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_smtpSettings.Username, _smtpSettings.Password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            logger.LogInformation("Booking confirmation email sent successfully to: {Email}", toEmail);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error sending booking confirmation email to: {Email}", toEmail);
+            throw;
+        }
+    }
+
     private static string BuildEmailHtml(EmailTemplateParameters parameters)
     {
         // Build optional sections
@@ -117,27 +160,56 @@ public class EmailService(
 
     private static EmailTemplateParameters GetForgotPasswordEmailParameters(string userName, string resetToken)
     {
-        const string subject = "Recuperação de Senha - AgendaPlus";
+        const string subject = "Password Recovery - AgendaPlus";
 
-        // TODO: Configurar a URL do frontend via configuração/environment variable
-        const string frontendUrl = "http://localhost:3000"; // URL do frontend
+        // TODO: Configure frontend URL via configuration/environment variable
+        const string frontendUrl = "http://localhost:3000"; // Frontend URL
         var resetUrl = $"{frontendUrl}/reset-password?token={Uri.EscapeDataString(resetToken)}";
 
         var bodyHtml = $"""
-                        <h3>Olá, {WebUtility.HtmlEncode(userName)}!</h3>
-                        <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
-                        <p>Clique no botão abaixo para redefinir sua senha:</p>
-                        <p>Este link expira em 1 hora.</p>
-                        <p>Se você não solicitou esta redefinição de senha, por favor ignore este e-mail.</p>
+                        <h3>Hello, {WebUtility.HtmlEncode(userName)}!</h3>
+                        <p>We received a request to reset your account password.</p>
+                        <p>Click the button below to reset your password:</p>
+                        <p>This link expires in 1 hour.</p>
+                        <p>If you did not request this password reset, please ignore this email.</p>
                         """;
 
-        const string footerHtml = "&copy; 2026 AgendaPlus. Todos os direitos reservados.";
+        const string footerHtml = "&copy; 2026 AgendaPlus. All rights reserved.";
 
-        const string buttonText = "Redefinir Senha";
+        const string buttonText = "Reset Password";
 
         var preHeader = string.Empty;
 
         return new EmailTemplateParameters(subject, bodyHtml, footerHtml, null, buttonText, resetUrl, preHeader);
+    }
+
+    private static EmailTemplateParameters GetBookingConfirmationEmailParameters(
+        string customerName,
+        string reservationCode,
+        DateTime startDateTime,
+        DateTime endDateTime,
+        decimal totalPrice,
+        string resourceName)
+    {
+        const string subject = "Booking Confirmation - AgendaPlus";
+
+        var bodyHtml = $"""
+                        <h3>Hello, {WebUtility.HtmlEncode(customerName)}!</h3>
+                        <p>Your booking has been confirmed successfully!</p>
+                        <div style='background:#f5f5f5; padding:15px; border-radius:5px; margin:20px 0;'>
+                            <p><strong>Reservation Code:</strong> <code style='font-size:16px; color:#4CAF50;'>{WebUtility.HtmlEncode(reservationCode)}</code></p>
+                            <p><strong>Resource:</strong> {WebUtility.HtmlEncode(resourceName)}</p>
+                            <p><strong>Date/Time:</strong> {startDateTime:MM/dd/yyyy HH:mm} to {endDateTime:MM/dd/yyyy HH:mm}</p>
+                            <p><strong>Total Amount:</strong> ${totalPrice:F2}</p>
+                        </div>
+                        <p>Keep your reservation code for future reference.</p>
+                        <p>To cancel or look up your booking, use the code above on our website.</p>
+                        """;
+
+        const string footerHtml = "&copy; 2026 AgendaPlus. All rights reserved.";
+        const string title = "Booking Confirmed";
+
+        return new EmailTemplateParameters(subject, bodyHtml, footerHtml, title, null, null, string.Empty);
     }
 }
 

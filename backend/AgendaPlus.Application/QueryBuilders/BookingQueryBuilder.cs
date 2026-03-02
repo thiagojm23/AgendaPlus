@@ -5,9 +5,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgendaPlus.Application.QueryBuilders;
 
-public class BookingQueryBuilder : BaseQueryBuilder<Booking>
+public class BookingQueryBuilder(IApplicationDbContext context) : BaseQueryBuilder<Booking>(context)
 {
-    public BookingQueryBuilder(IApplicationDbContext context) : base(context) { }
+    public BookingQueryBuilder AsNoTracking()
+    {
+        Query = Query.AsNoTracking();
+        return this;
+    }
+
+    public BookingQueryBuilder AsSplitQuery()
+    {
+        Query = Query.AsSplitQuery();
+        return this;
+    }
 
     public BookingQueryBuilder WithResource()
     {

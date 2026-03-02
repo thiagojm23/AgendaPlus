@@ -8,15 +8,15 @@ public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordComm
     public ResetPasswordCommandValidator()
     {
         RuleFor(x => x.Token)
-            .NotEmpty().WithMessage("O token é obrigatório");
+            .NotEmpty().WithMessage("Token is required");
 
         RuleFor(x => x.NewPassword)
-            .NotEmpty().WithMessage("A nova senha é obrigatória")
-            .MinimumLength(8).WithMessage("A senha deve ter no mínimo 8 caracteres")
-            .Matches(@"[A-Z]").WithMessage("A senha deve conter pelo menos uma letra maiúscula")
-            .Matches(@"[a-z]").WithMessage("A senha deve conter pelo menos uma letra minúscula")
-            .Matches(@"[0-9]").WithMessage("A senha deve conter pelo menos um número")
-            .Matches(@"[\W_]").WithMessage("A senha deve conter pelo menos um caractere especial")
-            .Equal(x => x.ConfirmPassword).WithMessage("As senhas não coincidem");
+            .NotEmpty().WithMessage("New password is required")
+            .MinimumLength(8).WithMessage("Password must be at least 8 characters")
+            .Matches(@"[A-Z]").WithMessage("Password must contain at least one uppercase letter")
+            .Matches(@"[a-z]").WithMessage("Password must contain at least one lowercase letter")
+            .Matches(@"[0-9]").WithMessage("Password must contain at least one number")
+            .Matches(@"[\W_]").WithMessage("Password must contain at least one special character")
+            .Equal(x => x.ConfirmPassword).WithMessage("Passwords do not match");
     }
 }

@@ -5,9 +5,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgendaPlus.Application.QueryBuilders;
 
-public class UserQueryBuilder : BaseQueryBuilder<User>
+public class UserQueryBuilder(IApplicationDbContext context) : BaseQueryBuilder<User>(context)
 {
-    public UserQueryBuilder(IApplicationDbContext context) : base(context) { }
+    public UserQueryBuilder AsNoTracking()
+    {
+        Query = Query.AsNoTracking();
+        return this;
+    }
+
+    public UserQueryBuilder AsSplitQuery()
+    {
+        Query = Query.AsSplitQuery();
+        return this;
+    }
 
     public UserQueryBuilder WithToken()
     {
@@ -24,7 +34,7 @@ public class UserQueryBuilder : BaseQueryBuilder<User>
     public UserQueryBuilder WithUserTenantsAndTenant()
     {
         Query = Query.Include(u => u.UserTenants)
-                     .ThenInclude(ut => ut.Tenant);
+            .ThenInclude(ut => ut.Tenant);
         return this;
     }
 
@@ -35,8 +45,11 @@ public class UserQueryBuilder : BaseQueryBuilder<User>
         if (!string.IsNullOrWhiteSpace(filter.Email))
             Query = Query.Where(u => u.Email == filter.Email);
 
-        if (!string.IsNullOrWhiteSpace(filter.FullName))
-            Query = Query.Where(u => u.FullName.Contains(filter.FullName));
+        if (!string.IsNullOrWhiteSpace(filter.FirstName))
+            Query = Query.Where(u => u.FirstName.Contains(filter.FirstName));
+
+        if (!string.IsNullOrWhiteSpace(filter.SecondName))
+            Query = Query.Where(u => u.SecondName.Contains(filter.SecondName));
 
         if (filter.SomenteAtivos.HasValue && filter.SomenteAtivos.Value)
             Query = Query.Where(u => u.IsActive);
